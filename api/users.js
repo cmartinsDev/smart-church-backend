@@ -58,20 +58,42 @@ module.exports = app => {
         .catch(err => res.json(err))
     } 
      
-    const updatePassword = (req, res) => { 
-        app.database('users') 
-            .where({ 'user_key': req.body.userKey }) 
-            .update({ password: req.body.password})  
-        .then(rowsAffected => { 
-            if (rowsAffected > 0) {
-                res.status(204).send()
-            } else {
-                message = `Could not update password`
-                res.status(400).send(message)
-            }
-        }) 
-        .catch(err => res.json(err))
+    
+    const newPassword = (req, res) => { 
+        if (!req.body.username) {
+            message = 'Please type the username.'
+            console.log(`[ERROR]: ${message}`)
+            return res.status(400).send(message)
+        }
+    
+        if (!req.body.password) {
+            message = 'Please type new password.'
+            console.log(`[ERROR]: ${message}`)
+            return res.status(400).send(message)
+        }
+
+        obterHash(req.body.password, hash => {
+            const password = hash
+            app
+            .database('users')
+            .where({ 'username': req.body.username }) 
+            .update({ password: password})
+            .then(rowsAffected => { 
+                if (rowsAffected > 0) {
+                    console.log(`[INFO]: You have been changed the password to username: ${req.body.username}`)
+                    res.status(204).send()
+                } else {
+                    message = `Could not update password to username ${req.body.username}`
+                    console.log(`[ERROR]: ${message}`)
+                    res.status(400).send(message)
+                }
+            }) 
+            .catch(err => {
+                console.log(`[ERROR]: ${err}`)
+                res.json(err)
+            })
+        })
     }
 
-    return { save, remove, allUsers, usersByChurch, updatePassword }
+    return { save, remove, allUsers, usersByChurch, newPassword }
 }
